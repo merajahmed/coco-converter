@@ -22,6 +22,10 @@ from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from shapely.geometry import Polygon
 import cv2
+import errno
+import os
+
+
 
 def index_ontology(ontology_normalized, export_type="index"):
   """ Given an ontology, returns a dictionary where {key=featureSchemaid : values = {"name", "color", "type", "kind", "parent_featureSchemaIds", "encoded_value"} for each feature in the ontology
@@ -375,11 +379,14 @@ if __name__ == "__main__":
     argparser.add_argument("-save_to", type=str, default="")
     args = argparser.parse_args()
     save_to = args.save_to
-    coco_dataset = coco_converter(Client(args.api_key).get_project(args.project_id))
     if not args.save_to:
         save_to = args.save_to
     else:
         save_to = args.save_to + "/" if args.save_to[-1] != "/" else args.save_to
+        if not os.path.exists(save_to):
+          raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), save_to)
+        
+    coco_dataset = coco_converter(Client(args.api_key).get_project(args.project_id))
     file_name = save_to + args.project_id + "_coco_dataset.json"
     print(f"\nSaving output file to {file_name}")
     with open(file_name, 'w') as f:
